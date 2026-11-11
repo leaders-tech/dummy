@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "react/only-export-components": [
+      "error",
+      {
+        "allowConstantExport": true,
+        "allowExportNames": ["useAuth", "AuthContext"]
+      }
+    ],
+    "typescript/no-explicit-any": "error"
+  }
+}
