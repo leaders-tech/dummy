@@ -1,61 +1,16 @@
-/*
-This file shows the public home page for the starter app.
-Edit this file when the first page text, links, or starter hints change.
-Copy this file as a starting point when you add another public page.
-*/
-
-import { Link } from "react-router-dom";
-
+/* The shared fruit room: one persisted colored banana per browser client. */
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { postJson } from "../shared/api";
+type Fruit = { id: number; client_id: string; name: string; color: string };
+const CLIENT_KEY = "fruit-room-client-id";
+const COLORS = ["#a8ff35", "#ffe600", "#ff4d6d", "#59d9ff", "#c77dff", "#ff9f1c"];
+const colorHue = (value: string) => `${COLORS.indexOf(value) * 58}deg`;
+const clientId = () => { const old = localStorage.getItem(CLIENT_KEY); if (old) return old; const next = crypto.randomUUID(); localStorage.setItem(CLIENT_KEY, next); return next; };
+const spin = () => { const direction = Math.random() > 0.5 ? 1 : -1; return { x: (Math.random() * 24 - 12), y: direction * (720 + Math.floor(Math.random() * 720)), z: (Math.random() * 24 - 12), speed: `${0.35 + Math.random() * 0.85}s`, scale: `${0.55 + Math.random() * 1.9}`, perspective: `${220 + Math.floor(Math.random() * 520)}px` }; };
 export function HomePage() {
-  return (
-    <section className="grid gap-6 md:grid-cols-[1.3fr_0.9fr]">
-      <div className="rounded-3xl bg-slate-900 px-8 py-10 text-white shadow-xl shadow-slate-900/20">
-        <p className="mb-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-sm">React + aiohttp + SQLite</p>
-        <h2 className="text-4xl font-semibold leading-tight">A small starter for PWA school projects.</h2>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-slate-200">
-          This template includes login, admin access, notes, tests, migrations, and a WebSocket example. It stays simple on purpose.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link className="rounded-full bg-sky-400 px-5 py-3 font-semibold text-slate-950" to="/login">
-            Open login page
-          </Link>
-        </div>
-      </div>
-      <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-8 shadow-lg shadow-slate-200/60">
-        {import.meta.env.DEV ? <DevUsers /> : <DeployedLoginHint />}
-      </div>
-    </section>
-  );
-}
-
-// Vite sets import.meta.env.DEV only for `make front`. Built apps (Docker, tlfpaas) never show demo passwords.
-function DevUsers() {
-  return (
-    <>
-      <h3 className="text-lg font-semibold text-slate-900">Default users in dev</h3>
-      <div className="mt-4 space-y-3 text-sm text-slate-700">
-        <div className="rounded-2xl bg-slate-50 p-4">
-          <p className="font-medium">Normal user</p>
-          <p>Username: user</p>
-          <p>Password: user</p>
-        </div>
-        <div className="rounded-2xl bg-slate-50 p-4">
-          <p className="font-medium">Admin user</p>
-          <p>Username: admin</p>
-          <p>Password: ADMIN_PASSWORD from .env (admin by default)</p>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function DeployedLoginHint() {
-  return (
-    <>
-      <h3 className="text-lg font-semibold text-slate-900">How to log in</h3>
-      <p className="mt-4 text-sm text-slate-700">
-        Log in as <strong>admin</strong> with the password from the <code>ADMIN_PASSWORD</code> setting.
-      </p>
-    </>
-  );
+  const [fruits, setFruits] = useState<Fruit[]>([]); const [name, setName] = useState(""); const [color, setColor] = useState(COLORS[0]); const [error, setError] = useState(""); const rotations = useRef<Record<number, ReturnType<typeof spin>>>({});
+  const load = async () => { try { const data = await postJson<{ fruits: Fruit[] }>("/fruits/list"); setFruits(data.fruits); } catch { setError("backend offline"); } };
+  useEffect(() => { void load(); const timer = window.setInterval(() => void load(), 2000); return () => window.clearInterval(timer); }, []);
+  const join = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setError(""); try { const data = await postJson<{ fruits: Fruit[] }>("/fruits/save", { client_id: clientId(), name, color }); setFruits(data.fruits); setName(""); } catch (joinError) { setError(joinError instanceof Error ? joinError.message : "could not save"); } };
+  return <main className="banana-room"><div className="banana-field" aria-live="polite">{fruits.map((fruit, index) => { const rotation = rotations.current[fruit.id] ?? (rotations.current[fruit.id] = spin()); return <div className="banana-user" key={fruit.id} style={{ left: `${8 + ((index * 19) % 84)}%`, top: `${12 + ((index * 27) % 70)}%`, ["--fruit-color" as string]: fruit.color, ["--fruit-hue" as string]: colorHue(fruit.color), ["--spin-x" as string]: `${rotation.x}deg`, ["--spin-y" as string]: `${rotation.y}deg`, ["--spin-z" as string]: `${rotation.z}deg`, ["--spin-speed" as string]: rotation.speed, ["--fruit-scale" as string]: rotation.scale, ["--spin-perspective" as string]: rotation.perspective }}><img className="pixel-banana" src="/pixel-banana.png" alt={`Rotating banana for ${fruit.name}`} /><span className="banana-name">{fruit.name}</span></div>; })}</div><form className="name-form" onSubmit={join}><input aria-label="Your name" value={name} onChange={(event) => setName(event.target.value)} placeholder="name" maxLength={24} required /><div className="colors" aria-label="Choose fruit color">{COLORS.map((choice) => <button type="button" key={choice} aria-label={choice} className={choice === color ? "selected" : ""} style={{ background: choice }} onClick={() => setColor(choice)} />)}</div><button type="submit">join</button></form>{error && <p className="error">{error}</p>}</main>;
 }

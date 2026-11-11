@@ -1,33 +1,10 @@
-/*
-This file keeps the shared frontend CSS and small global style choices.
-Edit this file when global colors, fonts, or page-wide CSS rules change.
-Copy a style pattern here when you add another shared global style block.
-*/
-
+/* Minimal black room styling and a chunky pixel banana. */
 @import "tailwindcss";
-
-:root {
-  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
-  color: #0f172a;
-  background: radial-gradient(circle at top, rgba(111, 168, 255, 0.22), transparent 36%), linear-gradient(180deg, #eff6ff 0%, #f8fafc 52%, #e2e8f0 100%);
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-#root {
-  min-height: 100vh;
-}
-
-a {
-  color: inherit;
-}
-
-button,
-input,
-textarea {
-  font: inherit;
-}
+:root { font-family: "Courier New", monospace; color: #8dff3f; background: #000; } * { box-sizing: border-box; } body { margin: 0; min-width: 320px; min-height: 100vh; background: #000; } #root { min-height: 100vh; }
+.banana-room { min-height: 100vh; position: relative; overflow: hidden; background: #000; } .banana-field { position: absolute; inset: 0; } .banana-user { position: absolute; display: grid; justify-items: center; gap: 8px; transform: translate(-50%, -50%) scale(var(--fruit-scale)); perspective: var(--spin-perspective); --fruit-color: #a8ff35; } .banana-name { color: var(--fruit-color); font-size: 15px; text-shadow: 0 0 8px var(--fruit-color); }
+.pixel-banana { width: 160px; height: 160px; object-fit: contain; image-rendering: pixelated; animation: spin var(--spin-speed) linear infinite; transform-style: preserve-3d; backface-visibility: visible; filter: hue-rotate(var(--fruit-hue, 0deg)) saturate(1.7) drop-shadow(0 0 5px var(--fruit-color)); }
+.banana-curve { left: 25px; top: 16px; width: 13px; height: 52px; transform: rotate(-38deg); box-shadow: 13px 10px var(--fruit-color), 26px 19px var(--fruit-color), 39px 27px var(--fruit-color), 52px 28px var(--fruit-color), 65px 20px var(--fruit-color), 78px 8px var(--fruit-color); } .banana-curve::after { content: ""; position: absolute; left: 10px; top: 48px; width: 13px; height: 12px; background: #000; box-shadow: 13px 8px #000, 26px 16px #000, 39px 24px #000, 52px 28px #000, 65px 25px #000, 78px 14px #000; }
+.banana-stem { left: 22px; top: 5px; width: 17px; height: 17px; background: #6fb51f !important; transform: rotate(-30deg); } .banana-tip { left: 98px; top: 48px; width: 14px; height: 14px; background: #6fb51f !important; transform: rotate(25deg); }
+@keyframes spin { from { transform: translateZ(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); } to { transform: translateZ(80px) rotateX(var(--spin-x)) rotateY(var(--spin-y)) rotateZ(var(--spin-z)); } }
+.name-form { position: fixed; left: 50%; bottom: 28px; display: flex; align-items: center; gap: 8px; transform: translateX(-50%); } .name-form input, .name-form button { border: 1px solid #8dff3f; background: #000; color: #8dff3f; padding: 9px 12px; font: inherit; outline: none; } .name-form input { width: 140px; } .name-form button { cursor: pointer; } .name-form button:hover, .name-form button:focus-visible { background: #8dff3f; color: #000; }
+.colors { display: flex; gap: 4px; } .colors button { width: 18px; height: 18px; padding: 0; border: 1px solid #fff; cursor: pointer; } .colors button.selected { outline: 2px solid #fff; outline-offset: 2px; } .error { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); color: #ff4d6d; }
