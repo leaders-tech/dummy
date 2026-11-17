@@ -12,7 +12,7 @@ from backend.app_keys import DB, WS_HUB
 from backend.auth.access import require_admin, require_user
 from backend.db.notes import delete_note, list_notes, save_note
 from backend.db.users import list_users
-from backend.db.fruits import list_fruits, save_fruit
+from backend.db.fruits import list_fruits, save_fruit, shoot_fruit
 from backend.http.json_api import AppError, ok, read_json
 from backend.http.middleware import require_allowed_origin
 
@@ -39,6 +39,21 @@ async def fruits_save(request: web.Request) -> web.Response:
         raise AppError(400, "bad_request", "Choose a valid color.")
     fruit = await save_fruit(request.app[DB], client_id.strip(), name.strip(), color)
     return ok({"fruit": fruit, "fruits": await list_fruits(request.app[DB])})
+
+
+async def fruits_shoot(request: web.Request) -> web.Response:
+    require_allowed_origin(request)
+    payload = await read_json(request)
+    client_id = payload.get("client_id")
+    target_id = payload.get("target_id")
+    if not isinstance(client_id, str) or type(target_id) is not int:
+        raise AppError(400, "bad_request", "Shooter and target are required.")
+    result = await shoot_fruit(request.app[DB], client_id.strip(), target_id)
+    if result is None:
+        raise AppError(404, "not_found", "Target banana was not found.")
+    if result[0]["limited"]:
+        raise AppError(429, "daily_limit", "You used all 10 shots for today.")
+    return ok({"fruits": await list_fruits(request.app[DB]), "shots_remaining": result[1]})
 
 
 async def notes_list(request: web.Request) -> web.Response:
@@ -88,6 +103,7 @@ def setup_api_routes(app: web.Application) -> None:
     app.router.add_get("/api/health", health)
     app.router.add_post("/api/fruits/list", fruits_list)
     app.router.add_post("/api/fruits/save", fruits_save)
+    app.router.add_post("/api/fruits/shoot", fruits_shoot)
     app.router.add_post("/api/notes/list", notes_list)
     app.router.add_post("/api/notes/save", notes_save)
     app.router.add_post("/api/notes/delete", notes_delete)
